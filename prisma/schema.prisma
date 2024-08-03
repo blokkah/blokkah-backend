@@ -1,0 +1,137 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id             String   @id @default(cuid())
+  firstName      String   @db.VarChar(50)
+  lastName       String   @db.VarChar(50)
+  email          String   @unique @db.VarChar(255)
+  password       String   @db.VarChar(100)
+  passwordUpdatedAt DateTime?
+  profilePicture String?
+  isActive       Boolean @default(false)
+  isDeleted      Boolean @default(false)
+  resetToken ResetToken?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  roles           EmployeeRoles[]
+}
+model User {
+  id             String   @id @default(cuid())
+  firstName      String   @db.VarChar(50)
+  lastName       String?   @db.VarChar(50)
+  userName       String?   @unique @db.VarChar(20)
+  phoneNumber    String?   @unique @db.VarChar(20)
+  password       String?   @db.VarChar(100)
+  profilePicture String?
+  dateOfBirth    DateTime?
+  country        String?   @db.VarChar(50)
+  language       Language
+  userType       UserType?
+  roleId         String   @db.VarChar(36)
+  appleId        String?   @db.VarChar(100)
+  googleId       String?   @db.VarChar(100)
+  xId            String?   @db.VarChar(100)
+  email          String?   @unique @db.VarChar(255)
+  isBlocked  Boolean @default(false)
+  isPending  Boolean @default(true)
+  isVerified Boolean @default(false)
+  isDeleted  Boolean @default(false)
+  isActive   Boolean @default(true)
+  isLocal    Boolean @default(false)
+  isGoogle   Boolean @default(false)
+  isApple    Boolean @default(false)
+  isX        Boolean @default(false)
+
+  falLicense    String? @db.VarChar(100)
+  nationalId    String? @db.VarChar(100)
+  referralCode  String?  @unique @db.VarChar(50)
+  referralCount Int     @default(0)
+  points        Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  passwordUpdatedAt DateTime?
+  roleName   String     @db.VarChar(20)
+  role       Role       @relation(fields: [roleId], references: [id])
+  referrerId String?
+  referrer   User?   @relation("UserReferal", fields: [referrerId], references: [id])
+  referees   User[]  @relation("UserReferal")
+  resetToken ResetToken?
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique @db.VarChar(50)
+  description String   @db.VarChar(255)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  employees           EmployeeRoles[]
+  users           User[]
+  rolePermissions RolePermission[]
+}
+model EmployeeRoles {
+  employeeId String
+  roleId     String
+  employee   Employee @relation(fields: [employeeId], references: [id],onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id],onDelete: Cascade)
+  @@id([employeeId, roleId])
+}
+
+model Permission {
+  id             String           @id @default(cuid())
+  collectionName String           @unique @db.VarChar(40)
+  action         String           @db.VarChar(20)
+  fields         String           @db.VarChar(255)
+  roles          RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+}
+
+model Country {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(50)
+  code      String   @unique @db.VarChar(5)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ResetToken {
+  id             String   @id @default(cuid())
+  token          String   @unique @db.VarChar(70)
+
+  userId         String?   @unique 
+  user           User?     @relation(fields: [userId], references: [id])
+
+  employeeId         String?   @unique 
+  employee           Employee?     @relation(fields: [employeeId], references: [id])
+  createdAt      DateTime @default(now())   
+}
+
+enum Language {
+  en
+  ar
+}
+
+enum UserType {
+  buyer
+  seller
+}
